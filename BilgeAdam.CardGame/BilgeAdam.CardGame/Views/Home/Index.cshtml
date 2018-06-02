@@ -1,0 +1,38 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<div class="row">
+    <div class="col-md-3">
+        <h3>Oyuncular</h3>
+        <ul class="list-group">
+            <li class="list-group-item">Can PERK <i class="fa fa-circle green pull-right"></i></li>
+            <li class="list-group-item">Berkay EMİR <i class="fa fa-circle red pull-right"></i></li>
+            <li class="list-group-item">Ecem DOĞDU <i class="fa fa-circle green pull-right"></i></li>
+        </ul>
+        <button type="button" class="btn btn-success" id="btnConnect">Bağlan</button>
+    </div>
+    <div class="col-md-9">
+        <div id="gameArea">
+            @for (int i = 0; i < 20; i++)
+            {
+                <div index="@i" class="card cardEmpty">
+                    <div class="cardContent"></div>
+                </div>
+            }
+        </div>
+    </div>
+    
+</div>
+
+<div class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" id="loginModal">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="form-group">
+                <label for="exampleInputEmail1">Adınız Soyadınız</label>
+                <input type="email" class="form-control" id="txtUserName" placeholder="Email">
+            </div>
+            <button id="btnStart" disabled class="btn btn-primary">Start</button>
+        </div>
+    </div>
+</div>
