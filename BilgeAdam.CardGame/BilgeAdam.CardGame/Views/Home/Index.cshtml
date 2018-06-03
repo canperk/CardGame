@@ -5,12 +5,41 @@
 <div class="row">
     <div class="col-md-3">
         <h3>Oyuncular</h3>
-        <ul class="list-group">
-            <li class="list-group-item">Can PERK <i class="fa fa-circle green pull-right"></i></li>
-            <li class="list-group-item">Berkay EMİR <i class="fa fa-circle red pull-right"></i></li>
-            <li class="list-group-item">Ecem DOĞDU <i class="fa fa-circle green pull-right"></i></li>
-        </ul>
-        <button type="button" class="btn btn-success" id="btnConnect">Bağlan</button>
+        <div id="userList">
+            <button v-on:click="startGame" class="btn btn-danger">Oyuna Gir</button>
+            <hr />
+            <ul class="list-group">
+                <li class="list-group-item" v-for="g in gamers" v-bind:id="g.id" v-on:click="join(g)" v-bind:class="{ 'currentUser' : g.isSelf }">
+                    {{g.name}}
+                    <i v-if="g.status == 0" class="fa fa-refresh fa-spin pull-right"></i>
+                    <i v-if="g.status == 1" class="fa fa-circle red pull-right"></i>
+                    <i v-if="g.status == 2" class="fa fa-circle green pull-right"></i>
+                </li>
+            </ul>
+        </div>
+        <div id="connectArea">
+            <button type="button" class="btn btn-success" v-if="!connected" v-on:click="openDialog">Bağlan</button>
+            <div class="modal fade" tabindex="-1" role="dialog" v-if="!connected" id="loginModal">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title">Kart Oyununa Bağlan</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Adınız Soyadınız</label>
+                                <input type="text" class="form-control" v-model="name">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" v-on:click="connect">Start</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="col-md-9">
         <div id="gameArea">
@@ -23,16 +52,4 @@
         </div>
     </div>
     
-</div>
-
-<div class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" id="loginModal">
-    <div class="modal-dialog modal-sm" role="document">
-        <div class="modal-content">
-            <div class="form-group">
-                <label for="exampleInputEmail1">Adınız Soyadınız</label>
-                <input type="email" class="form-control" id="txtUserName" placeholder="Email">
-            </div>
-            <button id="btnStart" disabled class="btn btn-primary">Start</button>
-        </div>
-    </div>
 </div>

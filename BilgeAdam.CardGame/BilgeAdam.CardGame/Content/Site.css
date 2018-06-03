@@ -16,13 +16,6 @@
     white-space: normal;
 }
 
-/* Set width on the form input elements since they're 100% wide by default */
-input,
-select,
-textarea {
-    max-width: 280px;
-}
-
 .red{
     color:#bd2b26;
 }
@@ -59,4 +52,7 @@ textarea {
 .cardEmpty:hover{
     background-color:#b64343;
     cursor:pointer;
+}
+.currentUser {
+    background-color: #f3b4b4;
 }
