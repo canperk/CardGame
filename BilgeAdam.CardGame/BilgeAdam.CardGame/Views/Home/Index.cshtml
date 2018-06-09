@@ -43,10 +43,11 @@
     </div>
     <div class="col-md-9">
         <div id="gameArea">
-            @for (int i = 0; i < 20; i++)
+            @for (int i = 0; i < 18; i++)
             {
-                <div index="@i" class="card cardEmpty">
-                    <div class="cardContent"></div>
+                <div index="@i" class="card">
+                    <div class="card__face card__face--front"></div>
+                    <div class="card__face card__face--back"></div>
                 </div>
             }
         </div>

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNet.SignalR;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -56,7 +55,21 @@ namespace BilgeAdam.CardGame
             {
                 user2.Status = Status.Busy;
             }
+            game.User2 = user2.Id;
             Clients.All.usersStartedToGame(user1.Id, user2.Id);
+            game.SetCards();
+            Clients.Client(user1.Id).gameStarted(game);
+            Clients.Client(user2.Id).gameStarted(game);
+        }
+
+        public void FlipCard(int index, string userId)
+        {
+            Clients.Client(userId).flipCard(index);
+        }
+
+        public void ChangeTurn(string opponent)
+        {
+            Clients.Client(opponent).getTurn();
         }
 
         public async override Task OnDisconnected(bool stopCalled)
@@ -66,39 +79,13 @@ namespace BilgeAdam.CardGame
             {
                 gamers.Remove(gamer);
             }
-            var userGames = games.Where(i => i.User1 == gamer.Id || i.User2 == gamer.Id).ToList();
-            userGames.ForEach(i => games.Remove(i));
+            var userGame = games.FirstOrDefault(i => i.User1 == gamer.Id || i.User2 == gamer.Id);
             Clients.Others.removeUser(gamer.Id);
+            Clients.Others.gameRemoved(userGame.User1, userGame.User2);
+
+            //TODO: Kartların çevrilmesi durumu için rakibe bildirim gitmesi
+            games.Remove(userGame);
             await Task.CompletedTask;
         }
-    }
-    class Game
-    {
-        public Game(string ownerId)
-        {
-            Id = Guid.NewGuid().ToString();
-            StartDate = DateTime.Now;
-            User1 = ownerId;
-            IsAvaliable = true;
-        }
-        public string Id { get; set; }
-        public DateTime StartDate { get; set; }
-        public string User1 { get; set; }
-        public string User2 { get; set; }
-        public bool IsAvaliable { get; set; }
-    }
-
-    class Gamer
-    {
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public Status Status { get; set; }
-    }
-
-    enum Status
-    {
-        Waiting = 0,
-        Busy = 1,
-        Guest = 2
     }
 }
