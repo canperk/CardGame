@@ -6,12 +6,96 @@ game.filpCard = function (index, name) {
     var path = "/images/" + name + ".png";
     self.find(".card__face.card__face--back").css("background-image", "url('" + path + "')");
 }
+game.selection = function (index, card) {
+    this.index = index;
+    this.card = card;
+}
+game.userCanContinue = function () {
+    $("#gameArea").css("border-color", "#1bff00");
+}
+game.userCanNotContinue = function () {
+    $("#gameArea").css("border-color", "#ae1e1e");
+}
+game.userInfo = function (id, name) {
+    this.id = id;
+    this.name = name;
+    this.point = 0;
+}
+game.onCardClick = function () {
+    if (gameArea.isStarted && gameArea.canPlay) {
+        if (gameArea.clickCount < 2) {
+            var self = $(this);
+            gameArea.clickCount++;
+            self.off("click");
+            self.toggleClass("is-flipped");
+            self.addClass("justPlayed");
+            var index = self.attr("index");
+            var cardName = gameArea.cards[index];
+            var selection = new game.selection(index, cardName);
+            gameArea.selections.push(selection);
+            game.filpCard(index, cardName);
+            if (game.hub.connection.id != gameArea.user1.id) {
+                game.hub.server.flipCard(index, gameArea.user1.id);
+            }
+            else if (game.hub.connection.id != gameArea.user2.id) {
+                game.hub.server.flipCard(index, gameArea.user2.id);
+            }
+
+            //Oyun hakı bitti
+            if (gameArea.clickCount == 2) {
+                game.userCanNotContinue();
+                gameArea.canPlay = false;
+                gameArea.clickCount = 0;
+                var opponentGamer = "";
+                var selfGamer = "";
+                //rakip bul
+                if (gameArea.user1.id == game.hub.connection.id) {
+                    opponentGamer = gameArea.user2.id;
+                    selfGamer = gameArea.user1.id;
+                }
+                else {
+                    opponentGamer = gameArea.user1.id;
+                    selfGamer = gameArea.user2.id;
+                }
+                //kartlar eşit mi
+                if (gameArea.selections[0].card == gameArea.selections[1].card) {
+                    gameArea.point += 1;
+                    gameArea.clickCount = 0;
+                    gameArea.canPlay = true;
+                    game.userCanContinue();
+                    gameArea.selections = [];
+                    if (gameArea.user1.id == selfGamer) {
+                        gameArea.user1.point++;
+                        game.hub.server.updatePoint(gameArea.user2.id, gameArea.user1.id, gameArea.user1.point);
+                    }
+                    else {
+                        gameArea.user2.point++;
+                        game.hub.server.updatePoint(gameArea.user1.id, gameArea.user2.id, gameArea.user2.point);
+                    }
+                    $(".justPlayed").removeClass("justPlayed");
+                    return;
+                }
+                else {
+                    setTimeout(function () {
+                        $(".justPlayed").click(game.onCardClick);
+                        $(".justPlayed").toggleClass("is-flipped");
+                        $(".justPlayed").removeClass("justPlayed");
+                        game.hub.server.undo(opponentGamer, gameArea.selections[0].index, gameArea.selections[1].index);
+                    }, 1000);
+                }
+                game.hub.server.changeTurn(opponentGamer);
+            }
+        }
+    }
+    else {
+        toastr.error("Kart oyun hakkınız doldu. Sıranızı bekleyiniz");
+    }
+}
 var userStatus = {};
 userStatus.waiting = 0;
 userStatus.busy = 1;
 userStatus.guest = 2;
 $(document).ready(function () {
-    
     game.hub = $.connection.gameHub;
     game.hub.client.openCard = function (id) {
         alert(id);
@@ -68,12 +152,12 @@ $(document).ready(function () {
     }
     game.hub.client.gameStarted = function (g) {
         gameArea.isStarted = true;
-        if (game.hub.connection.id == g.User1) {
+        if (game.hub.connection.id == g.User1.Id) {
             gameArea.canPlay = true;
-            $("#gameArea").css("border-color", "#1bff00");
+            game.userCanContinue();
         }
-        gameArea.user1 = g.User1;
-        gameArea.user2 = g.User2;
+        gameArea.user1 = new game.userInfo(g.User1.Id, g.User1.Name);
+        gameArea.user2 = new game.userInfo(g.User2.Id, g.User2.Name);
         gameArea.cards = g.Cards;
     }
     game.hub.client.flipCard = function (index) {
@@ -87,58 +171,24 @@ $(document).ready(function () {
     game.hub.client.getTurn = function () {
         gameArea.canPlay = true;
         gameArea.selections = [];
-        $("#gameArea").css("border-color", "#1bff00");
+        game.userCanContinue();
+    }
+    game.hub.client.undo = function (c1, c2) {
+        $(".card[index=" + c1 + "]").removeClass("is-flipped").click(game.onCardClick);
+        $(".card[index=" + c2 + "]").removeClass("is-flipped").click(game.onCardClick);
+    }
+    game.hub.client.updatePoint = function (id, point) {
+        if (gameArea.user1.id == id) {
+            gameArea.user1.point = point;
+        }
+        else {
+            gameArea.user2.point = point;
+        }
     }
     $.connection.hub.start().done(function () {
         game.hub.server.getUsers();
     });
-    $('.card').click(function () {
-        if (gameArea.isStarted && gameArea.canPlay) {
-            if (gameArea.clickCount < 2) {
-                gameArea.clickCount++;
-                $(this).off("click");
-                $(this).toggleClass("is-flipped");
-                $(this).addClass("justPlayed");
-                var index = $(this).attr("index");
-                var cardName = gameArea.cards[index];
-                gameArea.selections.push(cardName);
-                game.filpCard(index, cardName);
-                if (game.hub.connection.id != gameArea.user1) {
-                    game.hub.server.flipCard(index, gameArea.user1);
-                }
-                else if (game.hub.connection.id != gameArea.user2) {
-                    game.hub.server.flipCard(index, gameArea.user2);
-                }
-
-                //Oyun hakı bitti
-                if (gameArea.clickCount == 2) {
-                    $("#gameArea").css("border-color", "#ae1e1e");
-                    gameArea.canPlay = false;
-                    gameArea.clickCount = 0;
-                    var opponent = "";
-                    if (gameArea.user1 == game.hub.connection.id) {
-                        opponent = gameArea.user2;
-                    }
-                    else {
-                        opponent = gameArea.user1;
-                    }
-                    if (gameArea.selections[0] == gameArea.selections[1]) {
-                        gameArea.point += 1;
-                    }
-                    else {
-                        setTimeout(function () {
-                            $(".justPlayed").toggleClass("is-flipped");
-                            $(".justPlayed").removeClass("justPlayed");
-                        }, 1000);
-                    }
-                    game.hub.server.changeTurn(opponent);
-                }
-            }            
-        }
-        else {
-            toastr.error("Kart oyun hakkınız doldu. Sıranızı bekleyiniz");
-        }
-    });
+    $('.card').click(game.onCardClick);
 });
 var connector = new Vue({
     el: "#connectArea",
@@ -179,19 +229,15 @@ var users = new Vue({
     }
 });
 var gameArea = new Vue({
-    el: "",
+    el: "#gameArea",
     data: {
-        user1: "",
-        user2: "",
+        user1: {},
+        user2: {},
         isStarted: false,
         cards: [],
         clickCount: 0,
         canPlay: false,
-        selections: [],
-        point : 0
-    },
-    methods: {
-        
+        selections: []
     }
 });
 var gamer = function (id, name, status) {
@@ -200,4 +246,3 @@ var gamer = function (id, name, status) {
     this.status = status;
     this.isSelf = false;
 }
-

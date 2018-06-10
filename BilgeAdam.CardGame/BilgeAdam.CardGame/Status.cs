@@ -1,6 +1,6 @@
 ﻿namespace BilgeAdam.CardGame
 {
-    enum Status
+    public enum Status
     {
         Waiting = 0,
         Busy = 1,

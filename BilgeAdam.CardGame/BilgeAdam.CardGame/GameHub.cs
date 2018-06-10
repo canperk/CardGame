@@ -8,7 +8,7 @@ namespace BilgeAdam.CardGame
     public class GameHub : Hub
     {
         static List<Game> games = new List<Game>();
-        static List<Gamer> gamers = new List<Gamer>();
+        public static List<Gamer> gamers = new List<Gamer>();
         public void OpenCard(int id)
         {
             Clients.All.openCard(id);
@@ -40,7 +40,7 @@ namespace BilgeAdam.CardGame
 
         public void JoinGame(string ownerId)
         {
-            var game = games.FirstOrDefault(i => i.User1 == ownerId);
+            var game = games.FirstOrDefault(i => i.User1.Id == ownerId);
             if (game != null)
             {
                 game.IsAvaliable = false;
@@ -55,7 +55,7 @@ namespace BilgeAdam.CardGame
             {
                 user2.Status = Status.Busy;
             }
-            game.User2 = user2.Id;
+            game.User2 = user2;
             Clients.All.usersStartedToGame(user1.Id, user2.Id);
             game.SetCards();
             Clients.Client(user1.Id).gameStarted(game);
@@ -72,6 +72,16 @@ namespace BilgeAdam.CardGame
             Clients.Client(opponent).getTurn();
         }
 
+        public void Undo(string opponent, int card1, int card2)
+        {
+            Clients.Client(opponent).undo(card1, card2);
+        }
+
+        public void UpdatePoint(string opponentId, string id, int point)
+        {
+            Clients.Client(opponentId).updatePoint(id, point);
+        }
+
         public async override Task OnDisconnected(bool stopCalled)
         {
             var gamer = gamers.FirstOrDefault(i => i.Id == Context.ConnectionId);
@@ -79,7 +89,7 @@ namespace BilgeAdam.CardGame
             {
                 gamers.Remove(gamer);
             }
-            var userGame = games.FirstOrDefault(i => i.User1 == gamer.Id || i.User2 == gamer.Id);
+            var userGame = games.FirstOrDefault(i => i.User1.Id == gamer.Id || i.User2.Id == gamer.Id);
             Clients.Others.removeUser(gamer.Id);
             Clients.Others.gameRemoved(userGame.User1, userGame.User2);
 

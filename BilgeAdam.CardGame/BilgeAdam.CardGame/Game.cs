@@ -10,14 +10,14 @@ namespace BilgeAdam.CardGame
         {
             Id = Guid.NewGuid().ToString();
             StartDate = DateTime.Now;
-            User1 = ownerId;
+            User1 = GameHub.gamers.First(i => i.Id == ownerId);
             IsAvaliable = true;
         }
         public List<string> Cards { get; set; }
         public string Id { get; set; }
         public DateTime StartDate { get; set; }
-        public string User1 { get; set; }
-        public string User2 { get; set; }
+        public Gamer User1 { get; set; }
+        public Gamer User2 { get; set; }
         public bool IsAvaliable { get; set; }
         public void SetCards() {
             var r = new Random();
